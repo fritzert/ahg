@@ -1,0 +1,100 @@
+plugins {
+    id 'org.springframework.boot' version '3.5.3'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'java'
+}
+
+group = 'pe.mef.sitfis'
+version = '1.0.0'
+description = 'Sistema SITFIS - Modulo de Seguridad'
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(javaVersion)
+    targetCompatibility = JavaVersion.toVersion(javaVersion)
+}
+
+repositories {
+    mavenCentral()
+//    maven { url 'https://repo.spring.io/milestone' } // Repositorio opcional para Spring más recientes
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+//    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-api:${springdocVersion}"
+
+    runtimeOnly "com.oracle.database.jdbc:ojdbc11:${ojdbcVersion}"
+
+    // UTIL
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+    annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${lombokMapstructBindingVersion}"
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // TESTING
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:oracle-xe'
+
+    // DEPENDENCIAS SEGURAS
+    implementation 'org.apache.commons:commons-compress:1.26.0'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
+
+    // MIGRACION
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-oracle'
+
+    // OBSERVABILIDAD - (logs, metricas, tracing)
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+//    implementation 'com.github.loki4j:loki-logback-appender:1.5.2'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+//    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation 'net.ttddyy.observation:datasource-micrometer-spring-boot:1.0.1'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // usa Jackson para deserialización
+    
+    //verifica si el token o su jti está en Redis (blacklist).
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+	implementation 'org.springframework.data:spring-data-commons'
+	implementation 'commons-codec:commons-codec:1.16.0'
+
+}
+
+// Muy importante: forzar a MapStruct a generar beans Spring
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+            '-parameters',
+            '-Amapstruct.defaultComponentModel=spring'
+    ]
+    options.annotationProcessorPath = configurations.annotationProcessor
+}
+
+apply plugin: 'org.springframework.boot.aot'
+tasks.named("build") {
+    dependsOn tasks.named("processAot")
+}
+tasks.named("processTestAot").configure {
+    enabled = false
+}
+
+// Desactiva los tests (opcional)
+/*tasks.test {
+    enabled = false
+}*/
